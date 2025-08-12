@@ -11,21 +11,21 @@ const router = express.Router();
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    const { 
-      page = 1, 
-      limit = 10, 
-      categorie, 
-      niveau, 
+    const {
+      page = 1,
+      limit = 10,
+      categorie,
+      niveau,
       search,
-      enseignant 
+      enseignant
     } = req.query;
 
     // Construire le filtre
     let filter = {};
-    
+
     // Si un enseignant spécifique est demandé, on récupère tous ses cours
     // Sinon, on ne montre que les cours publiés
-    if (enseignant && enseignant !== 'undefined') {
+    if (enseignant && enseignant !== 'undefined' && enseignant !== 'null') {
       // Valider que l'ID enseignant est un ObjectId valide
       const mongoose = require('mongoose');
       if (!mongoose.Types.ObjectId.isValid(enseignant)) {
@@ -34,13 +34,14 @@ router.get('/', async (req, res) => {
         });
       }
       filter.enseignant = enseignant;
+      console.log('Recherche des cours pour l\'enseignant:', enseignant);
     } else {
       filter.status = 'publie';
     }
-    
+
     if (categorie) filter.categorie = categorie;
     if (niveau) filter.niveau = niveau;
-    
+
     // Recherche textuelle
     if (search) {
       filter.$text = { $search: search };
@@ -57,6 +58,8 @@ router.get('/', async (req, res) => {
       .limit(parseInt(limit));
 
     const total = await Course.countDocuments(filter);
+
+    console.log(`Trouvé ${courses.length} cours avec le filtre:`, filter);
 
     res.json({
       courses,
@@ -180,7 +183,7 @@ router.put('/:id', auth, async (req, res) => {
     }
 
     const allowedUpdates = [
-      'titre', 'description', 'categorie', 'niveau', 
+      'titre', 'description', 'categorie', 'niveau',
       'dureeEstimee', 'prix', 'imagePreview', 'modules', 'status'
     ];
 

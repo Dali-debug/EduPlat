@@ -4,6 +4,29 @@
   background-color: var(--background-color);
 }
 
+/* Auth Error State */
+.auth-error {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  margin: 4rem auto;
+}
+
+.auth-error h2 {
+  color: var(--error-color, #dc2626);
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.auth-error p {
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
 .dashboard-header {
   display: flex;
   justify-content: space-between;
@@ -155,7 +178,7 @@
     padding: 0.5rem 1rem;
     font-size: 0.75rem;
   }
-  
+
   .tab-button span {
     display: none;
   }
@@ -402,7 +425,8 @@
   margin-bottom: 1rem;
   display: -webkit-box;
   -webkit-line-clamp: 2;
-  line-clamp: 2; /* Standard property for compatibility */
+  line-clamp: 2;
+  /* Standard property for compatibility */
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -536,7 +560,7 @@
   .session-actions {
     width: 100%;
   }
-  
+
   .session-actions .btn {
     flex: 1;
   }
@@ -574,24 +598,24 @@
   .teacher-dashboard {
     padding: 1rem 0;
   }
-  
+
   .dashboard-header {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .dashboard-header h1 {
     font-size: 1.75rem;
   }
-  
+
   .tab-content {
     padding: 1.5rem;
   }
-  
+
   .course-actions {
     flex-direction: column;
   }
-  
+
   .course-actions .btn {
     flex: none;
   }
@@ -603,6 +627,7 @@
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

@@ -22,7 +22,7 @@ import toast from 'react-hot-toast';
 import './TeacherDashboard.css';
 
 const TeacherDashboard = () => {
-  const { user } = useAuth();
+  const { user, refreshAuthStatus } = useAuth();
   const [dashboardData, setDashboardData] = useState({
     courses: [],
     liveSessions: [],
@@ -37,15 +37,23 @@ const TeacherDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
-    loadDashboardData();
-  }, []);
+    if (user) {
+      loadDashboardData();
+    } else {
+      // Essayer de rafraîchir l'auth si l'utilisateur n'est pas défini
+      refreshAuthStatus().then(result => {
+        if (result.success) {
+          loadDashboardData();
+        } else {
+          setLoading(false);
+        }
+      });
+    }
+  }, [user]);
 
   const loadDashboardData = async () => {
     try {
-      console.log('Chargement des données pour l\'utilisateur:', user);
-      
-      if (!user || !user._id) {
-        console.error('Utilisateur non connecté ou ID manquant');
+      if (!user || (!user.id && !user._id)) {
         toast.error('Erreur d\'authentification. Veuillez vous reconnecter.');
         return;
       }
@@ -53,9 +61,9 @@ const TeacherDashboard = () => {
       // Charger les cours de cet enseignant
       let courses = [];
       try {
-        console.log('Chargement des cours pour l\'enseignant:', user._id);
-        const coursesResponse = await courseService.getCourses({ enseignant: user._id });
-        console.log('Réponse courses:', coursesResponse);
+        // Utiliser user.id en priorité (format cohérent du backend)
+        const enseignantId = user.id || user._id;
+        const coursesResponse = await courseService.getCourses({ enseignant: enseignantId });
         courses = coursesResponse.courses || [];
       } catch (coursesError) {
         console.error('Erreur chargement cours:', coursesError);
@@ -68,9 +76,9 @@ const TeacherDashboard = () => {
       // Charger les sessions live de cet enseignant
       let sessions = [];
       try {
-        console.log('Chargement des sessions pour l\'enseignant:', user._id);
-        const sessionsResponse = await liveService.getLiveSessions({ enseignant: user._id });
-        console.log('Réponse sessions:', sessionsResponse);
+        // Utiliser user.id en priorité (format cohérent du backend)
+        const enseignantId = user.id || user._id;
+        const sessionsResponse = await liveService.getLiveSessions({ enseignant: enseignantId });
         sessions = sessionsResponse.sessions || [];
       } catch (sessionsError) {
         console.error('Erreur chargement sessions:', sessionsError);
@@ -81,7 +89,7 @@ const TeacherDashboard = () => {
       }
 
       // Calculer les statistiques
-      const totalStudents = courses.reduce((acc, course) => 
+      const totalStudents = courses.reduce((acc, course) =>
         acc + (course.statistiques?.nbEtudiants || 0), 0
       );
 
@@ -101,6 +109,16 @@ const TeacherDashboard = () => {
       console.error('Erreur chargement dashboard enseignant:', error);
       if (error.response?.status === 401) {
         toast.error('Session expirée. Veuillez vous reconnecter.');
+        // Essayer de rafraîchir l'authentification
+        const refreshResult = await refreshAuthStatus();
+        if (!refreshResult.success) {
+          // Si le refresh échoue, rediriger vers login
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 2000);
+        }
+      } else if (error.response?.status === 403) {
+        toast.error('Accès refusé. Vérifiez vos permissions.');
       } else {
         toast.error('Erreur lors du chargement des données');
       }
@@ -136,7 +154,7 @@ const TeacherDashboard = () => {
   const getSessionStatus = (session) => {
     const now = new Date();
     const sessionDate = new Date(session.dateHeure);
-    
+
     if (session.status === 'termine') return 'Terminée';
     if (session.status === 'annule') return 'Annulée';
     if (sessionDate > now) return 'À venir';
@@ -158,6 +176,25 @@ const TeacherDashboard = () => {
     return <LoadingSpinner text="Chargement du dashboard enseignant..." />;
   }
 
+  if (!user) {
+    return (
+      <div className="teacher-dashboard">
+        <div className="container">
+          <div className="auth-error">
+            <h2>Erreur d'authentification</h2>
+            <p>Veuillez vous reconnecter pour accéder au dashboard enseignant.</p>
+            <button
+              onClick={() => window.location.href = '/login'}
+              className="btn btn-primary"
+            >
+              Se reconnecter
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const tabs = [
     { key: 'overview', label: 'Vue d\'ensemble', icon: <BarChart3 size={16} /> },
     { key: 'courses', label: 'Mes cours', icon: <BookOpen size={16} /> },
@@ -174,6 +211,13 @@ const TeacherDashboard = () => {
             <p>Bienvenue, {user.prenom} ! Gérez vos cours et sessions</p>
           </div>
           <div className="header-actions">
+            <button
+              onClick={loadDashboardData}
+              className="btn btn-outline"
+              disabled={loading}
+            >
+              {loading ? 'Chargement...' : 'Actualiser'}
+            </button>
             <Link to="/teacher/create-course" className="btn btn-primary">
               <Plus size={16} />
               Nouveau cours
@@ -350,14 +394,14 @@ const TeacherDashboard = () => {
                         </div>
 
                         <div className="course-actions">
-                          <Link 
+                          <Link
                             to={`/courses/${course._id}`}
                             className="btn btn-outline btn-sm"
                           >
                             <Eye size={14} />
                             Voir
                           </Link>
-                          <Link 
+                          <Link
                             to={`/teacher/courses/${course._id}/edit`}
                             className="btn btn-outline btn-sm"
                           >
@@ -415,7 +459,7 @@ const TeacherDashboard = () => {
                         {session.description && (
                           <p className="session-description">{session.description}</p>
                         )}
-                        
+
                         <div className="session-meta">
                           <div className="meta-item">
                             <Calendar size={16} />
@@ -433,7 +477,7 @@ const TeacherDashboard = () => {
                       </div>
 
                       <div className="session-actions">
-                        <Link 
+                        <Link
                           to={`/live/${session._id}`}
                           className="btn btn-outline btn-sm"
                         >

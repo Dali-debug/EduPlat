@@ -122,7 +122,7 @@ router.post('/login', [
 
     // Vérifier le mot de passe
     const isMatch = await user.comparePassword(motDePasse);
-    
+
     if (!isMatch) {
       return res.status(400).json({
         message: 'Email ou mot de passe incorrect'
@@ -165,9 +165,24 @@ router.get('/profile', auth, async (req, res) => {
       .populate('coursInscrits.coursId', 'titre imagePreview')
       .select('-motDePasse');
 
+    // Formater la réponse pour être cohérente avec login
+    const userResponse = {
+      id: user._id,
+      nom: user.nom,
+      prenom: user.prenom,
+      email: user.email,
+      role: user.role,
+      avatar: user.avatar,
+      preferences: user.preferences,
+      coursInscrits: user.coursInscrits,
+      statistiques: user.statistiques,
+      dateCreation: user.dateCreation,
+      dernierConnexion: user.dernierConnexion
+    };
+
     res.json({
       message: 'Profil récupéré avec succès',
-      user
+      user: userResponse
     });
   } catch (error) {
     console.error('Erreur récupération profil:', error);
@@ -216,9 +231,24 @@ router.put('/profile', auth, [
       { new: true, runValidators: true }
     ).select('-motDePasse');
 
+    // Formater la réponse pour être cohérente avec login
+    const userResponse = {
+      id: user._id,
+      nom: user.nom,
+      prenom: user.prenom,
+      email: user.email,
+      role: user.role,
+      avatar: user.avatar,
+      preferences: user.preferences,
+      coursInscrits: user.coursInscrits,
+      statistiques: user.statistiques,
+      dateCreation: user.dateCreation,
+      dernierConnexion: user.dernierConnexion
+    };
+
     res.json({
       message: 'Profil mis à jour avec succès',
-      user
+      user: userResponse
     });
   } catch (error) {
     console.error('Erreur mise à jour profil:', error);

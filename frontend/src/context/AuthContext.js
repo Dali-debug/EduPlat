@@ -30,7 +30,14 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Erreur vérification auth:', error);
-      localStorage.removeItem('token');
+      // Si l'erreur est liée à l'authentification, nettoyer et ne pas afficher d'erreur
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        setUser(null);
+      } else {
+        // Pour les autres erreurs, on peut afficher un message
+        console.warn('Erreur de connexion lors de la vérification du statut d\'authentification');
+      }
     } finally {
       setLoading(false);
     }
@@ -40,10 +47,10 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       const response = await authService.login(credentials);
-      
+
       localStorage.setItem('token', response.token);
       setUser(response.user);
-      
+
       toast.success('Connexion réussie !');
       return { success: true };
     } catch (error) {
@@ -59,10 +66,10 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       const response = await authService.register(userData);
-      
+
       localStorage.setItem('token', response.token);
       setUser(response.user);
-      
+
       toast.success('Inscription réussie !');
       return { success: true };
     } catch (error) {
@@ -105,6 +112,25 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const refreshAuthStatus = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const userData = await authService.getProfile();
+        setUser(userData.user);
+        return { success: true };
+      }
+    } catch (error) {
+      console.error('Erreur refresh auth:', error);
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        setUser(null);
+        toast.error('Session expirée. Veuillez vous reconnecter.');
+      }
+      return { success: false, error: error.message };
+    }
+  };
+
   const value = {
     user,
     loading,
@@ -113,7 +139,8 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateProfile,
     changePassword,
-    checkAuthStatus
+    checkAuthStatus,
+    refreshAuthStatus
   };
 
   return (

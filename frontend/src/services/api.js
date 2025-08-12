@@ -36,12 +36,22 @@ api.interceptors.response.use(
       console.log('Token invalide détecté, nettoyage...');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      // Rediriger vers la page de connexion seulement si on n'y est pas déjà
-      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
-        window.location.href = '/login';
+
+      // Ne rediriger vers la page de connexion que si on n'y est pas déjà
+      // et si on n'est pas sur la page d'accueil
+      const currentPath = window.location.pathname;
+      if (!currentPath.includes('/login') &&
+        !currentPath.includes('/register') &&
+        !currentPath.includes('/') &&
+        currentPath !== '/') {
+
+        // Ajouter un petit délai pour éviter les redirections multiples
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 100);
       }
     }
-    
+
     // Gestion des erreurs réseau
     if (!error.response) {
       console.error('Erreur réseau:', error.message);
@@ -53,7 +63,7 @@ api.interceptors.response.use(
         }
       });
     }
-    
+
     return Promise.reject(error);
   }
 );
