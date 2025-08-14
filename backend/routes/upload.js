@@ -47,29 +47,48 @@ const upload = multer({
 });
 
 // @route   POST /api/upload/image
-// @desc    Upload d'une image
-// @access  Private (Enseignant/Admin)
-router.post('/image', auth, isTeacherOrAdmin, upload.single('image'), (req, res) => {
+// @desc    Upload d'une image - SIMPLE ET EFFICACE
+// @access  Private
+router.post('/image', auth, upload.single('image'), (req, res) => {
+  console.log('=== DÉBUT UPLOAD IMAGE ===');
+  console.log('User ID:', req.user?.id || req.user?._id);
+  console.log('Fichier reçu:', req.file ? 'OUI' : 'NON');
+
   try {
     if (!req.file) {
+      console.log('❌ Aucun fichier dans la requête');
       return res.status(400).json({
+        success: false,
         message: 'Aucun fichier fourni'
       });
     }
 
-    const fileUrl = `/uploads/${req.file.filename}`;
+    console.log('📁 Fichier:', {
+      nom: req.file.filename,
+      taille: req.file.size,
+      type: req.file.mimetype
+    });
 
-    res.json({
+    const fileUrl = `/uploads/${req.file.filename}`;
+    console.log('🔗 URL générée:', fileUrl);
+
+    const response = {
+      success: true,
       message: 'Image uploadée avec succès',
       url: fileUrl,
       filename: req.file.filename,
-      originalName: req.file.originalname,
       size: req.file.size
-    });
+    };
+
+    console.log('✅ Réponse envoyée:', response);
+    res.json(response);
+
   } catch (error) {
-    console.error('Erreur upload image:', error);
+    console.error('❌ Erreur upload:', error);
     res.status(500).json({
-      message: 'Erreur serveur lors de l\'upload'
+      success: false,
+      message: 'Erreur serveur lors de l\'upload',
+      error: error.message
     });
   }
 });
@@ -139,7 +158,7 @@ router.use((error, req, res, next) => {
       });
     }
   }
-  
+
   if (error.message === 'Type de fichier non autorisé') {
     return res.status(400).json({
       message: 'Type de fichier non autorisé'

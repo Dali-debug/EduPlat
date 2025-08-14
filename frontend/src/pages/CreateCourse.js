@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { courseService } from '../services/courseService';
+import ImageUpload from '../components/ImageUpload';
 import {
   BookOpen,
   Save,
@@ -17,7 +18,7 @@ const CreateCourse = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [activeStep, setActiveStep] = useState(1);
-  
+
   const [courseData, setCourseData] = useState({
     titre: '',
     description: '',
@@ -65,7 +66,7 @@ const CreateCourse = () => {
       ...prev,
       [field]: value
     }));
-    
+
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({
@@ -78,8 +79,8 @@ const CreateCourse = () => {
   const handleModuleChange = (moduleIndex, field, value) => {
     setCourseData(prev => ({
       ...prev,
-      modules: prev.modules.map((module, index) => 
-        index === moduleIndex 
+      modules: prev.modules.map((module, index) =>
+        index === moduleIndex
           ? { ...module, [field]: value }
           : module
       )
@@ -119,20 +120,20 @@ const CreateCourse = () => {
   const addVideo = (moduleIndex) => {
     setCourseData(prev => ({
       ...prev,
-      modules: prev.modules.map((module, index) => 
-        index === moduleIndex 
+      modules: prev.modules.map((module, index) =>
+        index === moduleIndex
           ? {
-              ...module,
-              videos: [
-                ...module.videos,
-                {
-                  titre: '',
-                  url: '',
-                  duree: 0,
-                  ordre: module.videos.length + 1
-                }
-              ]
-            }
+            ...module,
+            videos: [
+              ...module.videos,
+              {
+                titre: '',
+                url: '',
+                duree: 0,
+                ordre: module.videos.length + 1
+              }
+            ]
+          }
           : module
       )
     }));
@@ -141,14 +142,14 @@ const CreateCourse = () => {
   const removeVideo = (moduleIndex, videoIndex) => {
     setCourseData(prev => ({
       ...prev,
-      modules: prev.modules.map((module, index) => 
-        index === moduleIndex 
+      modules: prev.modules.map((module, index) =>
+        index === moduleIndex
           ? {
-              ...module,
-              videos: module.videos
-                .filter((_, vIndex) => vIndex !== videoIndex)
-                .map((video, vIndex) => ({ ...video, ordre: vIndex + 1 }))
-            }
+            ...module,
+            videos: module.videos
+              .filter((_, vIndex) => vIndex !== videoIndex)
+              .map((video, vIndex) => ({ ...video, ordre: vIndex + 1 }))
+          }
           : module
       )
     }));
@@ -157,16 +158,16 @@ const CreateCourse = () => {
   const handleVideoChange = (moduleIndex, videoIndex, field, value) => {
     setCourseData(prev => ({
       ...prev,
-      modules: prev.modules.map((module, mIndex) => 
-        mIndex === moduleIndex 
+      modules: prev.modules.map((module, mIndex) =>
+        mIndex === moduleIndex
           ? {
-              ...module,
-              videos: module.videos.map((video, vIndex) =>
-                vIndex === videoIndex
-                  ? { ...video, [field]: value }
-                  : video
-              )
-            }
+            ...module,
+            videos: module.videos.map((video, vIndex) =>
+              vIndex === videoIndex
+                ? { ...video, [field]: value }
+                : video
+            )
+          }
           : module
       )
     }));
@@ -259,7 +260,7 @@ const CreateCourse = () => {
         return (
           <div className="step-content">
             <h3>Informations générales</h3>
-            
+
             <div className="form-group">
               <label className="label">Titre du cours *</label>
               <input
@@ -345,24 +346,13 @@ const CreateCourse = () => {
 
             <div className="form-group">
               <label className="label">Image de prévisualisation</label>
-              <div className="image-upload">
-                <input
-                  type="url"
-                  value={courseData.imagePreview}
-                  onChange={(e) => handleInputChange('imagePreview', e.target.value)}
-                  className="input"
-                  placeholder="URL de l'image"
-                />
-                <button type="button" className="btn btn-outline">
-                  <Upload size={16} />
-                  Télécharger
-                </button>
-              </div>
-              {courseData.imagePreview && (
-                <div className="image-preview">
-                  <img src={courseData.imagePreview} alt="Prévisualisation" />
-                </div>
-              )}
+              <ImageUpload
+                onImageUploaded={(url) => handleInputChange('imagePreview', url)}
+                currentImage={courseData.imagePreview}
+                aspectRatio={16 / 9}
+                placeholder="Cliquez pour ajouter une image de cours"
+                maxSize={5 * 1024 * 1024} // 5MB
+              />
             </div>
           </div>
         );
@@ -371,7 +361,7 @@ const CreateCourse = () => {
         return (
           <div className="step-content">
             <h3>Contenu du cours</h3>
-            
+
             <div className="modules-section">
               {courseData.modules.map((module, moduleIndex) => (
                 <div key={moduleIndex} className="module-card">
@@ -497,7 +487,7 @@ const CreateCourse = () => {
         return (
           <div className="step-content">
             <h3>Paramètres de publication</h3>
-            
+
             <div className="publish-options">
               <div className="option-card">
                 <h4>Sauvegarder comme brouillon</h4>
@@ -587,9 +577,8 @@ const CreateCourse = () => {
           {steps.map(step => (
             <div
               key={step.number}
-              className={`step ${activeStep === step.number ? 'active' : ''} ${
-                activeStep > step.number ? 'completed' : ''
-              }`}
+              className={`step ${activeStep === step.number ? 'active' : ''} ${activeStep > step.number ? 'completed' : ''
+                }`}
             >
               <div className="step-number">{step.number}</div>
               <div className="step-info">
@@ -612,9 +601,9 @@ const CreateCourse = () => {
                 Précédent
               </button>
             )}
-            
+
             <div className="nav-spacer"></div>
-            
+
             {activeStep < 3 && (
               <button onClick={nextStep} className="btn btn-primary">
                 Suivant

@@ -47,6 +47,37 @@ const AdminDashboard = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
+  // Fonction pour charger les données du dashboard
+  const loadDashboardData = async () => {
+    try {
+      const [usersResponse, coursesResponse] = await Promise.all([
+        userService.getUsers({ limit: 100 }),
+        courseService.getCourses({ limit: 100 })
+      ]);
+
+      const users = usersResponse.users || [];
+      const courses = coursesResponse.courses || [];
+
+      const stats = {
+        totalUsers: users.length,
+        totalCourses: courses.length,
+        totalStudents: users.filter(user => user.role === 'etudiant').length,
+        totalTeachers: users.filter(user => user.role === 'enseignant').length
+      };
+
+      setDashboardData({
+        users,
+        courses,
+        stats
+      });
+    } catch (error) {
+      console.error('Erreur chargement dashboard admin:', error);
+      toast.error('Erreur lors du chargement des données');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Vérification du rôle admin
   useEffect(() => {
     if (!authLoading && user) {
@@ -63,36 +94,6 @@ const AdminDashboard = () => {
   }, [user, authLoading]);
 
   useEffect(() => {
-    const loadDashboardData = async () => {
-      try {
-        const [usersResponse, coursesResponse] = await Promise.all([
-          userService.getUsers({ limit: 100 }),
-          courseService.getCourses({ limit: 100 })
-        ]);
-
-        const users = usersResponse.users || [];
-        const courses = coursesResponse.courses || [];
-
-        const stats = {
-          totalUsers: users.length,
-          totalCourses: courses.length,
-          totalStudents: users.filter(user => user.role === 'etudiant').length,
-          totalTeachers: users.filter(user => user.role === 'enseignant').length
-        };
-
-        setDashboardData({
-          users,
-          courses,
-          stats
-        });
-      } catch (error) {
-        console.error('Erreur chargement dashboard admin:', error);
-        toast.error('Erreur lors du chargement des données');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     // Ne charger les données que si l'utilisateur est vérifié comme admin
     if (isAdminVerified && !authLoading) {
       loadDashboardData();
@@ -447,7 +448,7 @@ const AdminDashboard = () => {
                         <td>{formatDate(user.dateInscription)}</td>
                         <td>
                           <div className="action-buttons">
-                            <button 
+                            <button
                               onClick={() => {
                                 setSelectedUser(user);
                                 setShowPasswordModal(true);
@@ -457,7 +458,7 @@ const AdminDashboard = () => {
                             >
                               <Key size={14} />
                             </button>
-                            <button 
+                            <button
                               onClick={() => handleToggleUserStatus(user._id, user.status || 'actif')}
                               className="btn btn-outline btn-sm"
                               title={user.status === 'suspendu' ? 'Activer' : 'Suspendre'}
@@ -470,7 +471,7 @@ const AdminDashboard = () => {
                             <button className="btn btn-outline btn-sm">
                               <Edit size={14} />
                             </button>
-                            <button 
+                            <button
                               onClick={() => handleDeleteUser(user._id)}
                               className="btn btn-outline btn-sm danger"
                             >
@@ -557,7 +558,7 @@ const AdminDashboard = () => {
                             <button className="btn btn-outline btn-sm">
                               <Edit size={14} />
                             </button>
-                            <button 
+                            <button
                               onClick={() => handleDeleteCourse(course._id)}
                               className="btn btn-outline btn-sm danger"
                             >
@@ -652,7 +653,7 @@ const AdminDashboard = () => {
                   </span>
                 </div>
               </div>
-              
+
               <div className="password-form">
                 <div className="form-group">
                   <label htmlFor="newPassword">Nouveau mot de passe</label>
@@ -665,7 +666,7 @@ const AdminDashboard = () => {
                     className="form-control"
                   />
                 </div>
-                
+
                 <div className="form-group">
                   <label htmlFor="confirmPassword">Confirmer le mot de passe</label>
                   <input
@@ -677,7 +678,7 @@ const AdminDashboard = () => {
                     className="form-control"
                   />
                 </div>
-                
+
                 <div className="password-requirements">
                   <p>Exigences du mot de passe :</p>
                   <ul>

@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import SimpleAvatarUpload from '../components/SimpleAvatarUpload';
 import {
   User,
-  Mail,
   Lock,
-  Camera,
   Save,
   Eye,
   EyeOff,
@@ -19,13 +18,25 @@ const Profile = () => {
   const { user, updateProfile, changePassword } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(false);
-  
+
   // Profile form state
   const [profileForm, setProfileForm] = useState({
     nom: user?.nom || '',
     prenom: user?.prenom || '',
     avatar: user?.avatar || ''
   });
+
+  // Synchroniser profileForm avec les données user mises à jour
+  useEffect(() => {
+    if (user) {
+      setProfileForm(prev => ({
+        ...prev,
+        nom: user.nom || '',
+        prenom: user.prenom || '',
+        avatar: user.avatar || ''
+      }));
+    }
+  }, [user]);
 
   // Password form state
   const [passwordForm, setPasswordForm] = useState({
@@ -54,7 +65,7 @@ const Profile = () => {
       ...prev,
       [name]: value
     }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
@@ -70,13 +81,50 @@ const Profile = () => {
       ...prev,
       [name]: value
     }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
         [name]: ''
       }));
+    }
+  };
+
+  const handleAvatarUpdate = async (avatarUrl) => {
+    console.log('🔄 Mise à jour avatar avec URL:', avatarUrl);
+
+    try {
+      // Préparer les données de profil avec le nouvel avatar
+      const updatedProfile = {
+        nom: user.nom,
+        prenom: user.prenom,
+        avatar: avatarUrl,
+        preferences: user.preferences || preferences
+      };
+
+      console.log('📤 Envoi mise à jour profil:', updatedProfile);
+
+      // Mettre à jour via le service auth
+      const result = await updateProfile(updatedProfile);
+
+      if (result.success) {
+        console.log('✅ Profil mis à jour avec succès');
+
+        // Mettre à jour l'état local
+        setProfileForm(prev => ({
+          ...prev,
+          avatar: avatarUrl
+        }));
+
+        return true;
+      } else {
+        console.error('❌ Erreur mise à jour profil:', result.error);
+        throw new Error(result.error || 'Erreur de sauvegarde');
+      }
+    } catch (error) {
+      console.error('❌ Erreur handleAvatarUpdate:', error);
+      throw error;
     }
   };
 
@@ -131,7 +179,7 @@ const Profile = () => {
 
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateProfileForm()) return;
 
     setLoading(true);
@@ -139,7 +187,7 @@ const Profile = () => {
       ...profileForm,
       preferences
     });
-    
+
     if (result.success) {
       toast.success('Profil mis à jour avec succès !');
     }
@@ -148,12 +196,12 @@ const Profile = () => {
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validatePasswordForm()) return;
 
     setLoading(true);
     const result = await changePassword(passwordForm);
-    
+
     if (result.success) {
       setPasswordForm({
         ancienMotDePasse: '',
@@ -190,16 +238,11 @@ const Profile = () => {
           {/* Profile Sidebar */}
           <div className="profile-sidebar">
             <div className="profile-avatar-section">
-              <div className="profile-avatar">
-                {user?.avatar ? (
-                  <img src={user.avatar} alt={user.nom} />
-                ) : (
-                  <span>{user?.nom?.charAt(0)}{user?.prenom?.charAt(0)}</span>
-                )}
-                <button className="avatar-upload-btn">
-                  <Camera size={16} />
-                </button>
-              </div>
+              <SimpleAvatarUpload
+                currentAvatar={user?.avatar}
+                onAvatarUpdate={handleAvatarUpdate}
+                userName={`${user?.prenom || ''} ${user?.nom || ''}`.trim()}
+              />
               <div className="profile-basic-info">
                 <h3>{user?.nom} {user?.prenom}</h3>
                 <p>{user?.email}</p>
