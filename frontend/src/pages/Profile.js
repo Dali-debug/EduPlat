@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import SimpleAvatarUpload from '../components/SimpleAvatarUpload';
+import AvatarUploadWithCrop from '../components/AvatarUploadWithCrop';
 import {
   User,
   Lock,
@@ -238,7 +238,7 @@ const Profile = () => {
           {/* Profile Sidebar */}
           <div className="profile-sidebar">
             <div className="profile-avatar-section">
-              <SimpleAvatarUpload
+              <AvatarUploadWithCrop
                 currentAvatar={user?.avatar}
                 onAvatarUpdate={handleAvatarUpdate}
                 userName={`${user?.prenom || ''} ${user?.nom || ''}`.trim()}
